@@ -11,7 +11,6 @@ import {
 import OPPORTUNITY_DISCOUNT_SUMMARY_OBJECT from "@salesforce/schema/OpportunityDiscountSummary__c";
 import OPPORTUNITY_OBJECT from "@salesforce/schema/Opportunity";
 import RECORD_CREATED_FIELD from "@salesforce/schema/Opportunity.Erm_igungen_Zusammenfassung__c";
-import OPPORTUNITY_AMOUNT_FIELD from "@salesforce/schema/Opportunity.Amount";
 
 export default class ModalComponent extends LightningElement {
   @api recordId; // The ID of the Opportunity record
@@ -86,7 +85,6 @@ export default class ModalComponent extends LightningElement {
     fields["Totalrabatt__c"] = this.totalRabatt; // Set the Totalrabatt value
     fields["Totalverkaufspreis__c"] = this.totalVerkaufspreis;
     fields["Totalrohertrag__c"] = this.totalRohertrag;
-    fields[OPPORTUNITY_AMOUNT_FIELD.fieldApiName] = this.totalVerkaufspreis;
 
     // Define the recordInput for creating a new record
     const recordInput = {
