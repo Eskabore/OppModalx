@@ -1,0 +1,27 @@
+/* oppModalx.css */
+.slds-modal__container {
+    width: 50%;
+    max-width: 50rem; /* Adjust the max-width as necessary */
+}
+
+.slds-modal__content {
+    overflow: hidden; /* Ensures the content does not overflow the modal */
+}
+
+/* This ensures that the modal is centered on the page */
+.slds-modal {
+    align: center;
+    display: flex;
+    justify-content: center;
+}
+
+/* Styling for the input fields to control their width */
+.slds-size_1-of-2 {
+    padding: var(--lwc-spacingMedium); /* Adds some space around the fields */
+}
+
+
+/* Style for the backdrop */
+.slds-backdrop {
+    z-index: -1;
+}

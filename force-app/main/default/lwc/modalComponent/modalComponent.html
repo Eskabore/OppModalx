@@ -1,0 +1,119 @@
+<template>
+    <lightning-card title="Opportunity Preisdetails" icon-name="standard:opportunity">
+        <!-- Button to open the modal -->
+        <lightning-button slot="actions" label="Preisdetails" title="Preisdetails anzeigen" onclick={openModal}
+            class="slds-m-bottom_small"></lightning-button>
+    </lightning-card>
+
+    <!-- Modal Structure -->
+    <template if:true={isModalOpen}>
+        <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open"
+            aria-labelledby="modal-heading-01">
+            <div class="slds-modal__container">
+                <!-- Modal Header -->
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Opportunity Preisdetails</h2>
+                </header>
+                <!-- Modal Body -->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <!-- Total Nachlass and Total Rabatt fields -->
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-size_1-of-2">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="total-nachlass">Totalnachlass (€)</label>
+                                <div class="slds-form-element__control">
+                                    <input type="text" readonly="" class="slds-input" id="total-nachlass"
+                                        value={totalNachlass} />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="total-rabatt">Totalrabatt (%)</label>
+                                <div class="slds-form-element__control">
+                                    <input type="text" readonly="" class="slds-input" id="total-rabatt"
+                                        value={totalRabatt} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Table to display product details -->
+                    <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Produktliste">Produktliste</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Quantity">Quantity</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Listenpreis">Listenpreis</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Totalpreis">Totalpreis</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Verkaufspreis">Verkaufspreis</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Rabatt">Rabatt (%)</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Nachlass">Nachlass</div>
+                                </th>
+                                <th class="" scope="col">
+                                    <div class="slds-truncate" title="Rohertrag">Rohertrag</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={lineItemsWithNachlass} for:item="item">
+                                <tr key={item.Id} class="slds-hint-parent">
+                                    <!-- Product Name Column -->
+                                    <td data-label="Produktliste">
+                                        <div class="slds-truncate" title={item.Nur_Produktname__c}>
+                                            {item.Nur_Produktname__c}</div>
+                                    </td>
+                                    <!-- Quantity Column -->
+                                    <td data-label="Quantity">
+                                        <div class="slds-truncate" title={item.Quantity}>{item.Quantity}</div>
+                                    </td>
+                                    <!-- Listenpreis Column -->
+                                    <td data-label="Listenpreis">
+                                        <div class="slds-truncate" title={item.Listenpreis}>{item.Listenpreis}€</div>
+                                    </td>
+                                    <td data-label="TotalPreis">
+                                        <div class="slds-truncate" title={item.Totalpreis}>{item.Totalpreis}€</div>
+                                    </td>
+                                    <!-- Verkaufspreis Input Column -->
+                                    <td data-label="Verkaufspreis">
+                                        <lightning-input type="number" name="verkaufspreis" label="Verkaufspreis"
+                                            data-id={item.Id} value={item.Verkaufspreis}
+                                            onchange={handleVerkaufspreisChange}></lightning-input>
+                                    </td>
+                                    <td data-label="Rabatt">
+                                        <div class="slds-truncate" title={item.rabatt}>{item.rabatt}%</div>
+                                    </td>
+                                    <td data-label="Nachlass">
+                                        <div class="slds-truncate" title={item.Nachlass}>{item.Nachlass} €</div>
+                                    </td>
+                                    <td data-label="Rohertrag">
+                                        <div class="slds-truncate" title={item.Rohertrag}>{item.Rohertrag} €</div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Modal Footer -->
+                <footer class="slds-modal__footer">
+                    <lightning-button variant="neutral" label="Cancel" title="Cancel"
+                        onclick={closeModal}></lightning-button>
+                    <lightning-button type="button" variant="brand" label="Save" title="Save" onclick={saveDetails}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

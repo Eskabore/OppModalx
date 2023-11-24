@@ -1,0 +1,31 @@
+.slds-modal__container {
+    max-width: none; /* Remove constraints on maximum width */
+    width: auto; /* Allow the container to expand based on content width */
+    max-height: 90vh; /* Allow for some space from the top and bottom of the view */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.slds-modal__content {
+    overflow-x: auto; /* Hide overflow and allow the table to dictate the area's scroll */
+}
+
+.slds-table {
+    width: 100%; /* Ensure the table takes up the width it needs */
+    table-layout: auto; /* Allow table cells to determine their own width */
+    overflow-x: auto; /* Enable horizontal scrolling within the table */
+}
+
+
+.slds-table th,
+.slds-table td {
+    word-wrap: break-word; /* Allow long words to be broken and wrapped to the next line */
+    white-space: normal; /* Allow whitespace to wrap to the next line */
+}
+
+
+.slds-truncate {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+}
+

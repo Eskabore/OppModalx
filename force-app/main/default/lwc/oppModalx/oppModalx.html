@@ -1,0 +1,44 @@
+<template>
+    <lightning-card title="Opportunity Price Details" icon-name="standard:opportunity">
+        <!-- Only show button if Price Details have not been created -->
+        <template if:true={showPriceDetailsButton}>
+            <lightning-button label="Price Details" title="Price Details" onclick={openModal} class="slds-m-left_x-small"></lightning-button>
+        </template>
+        
+        <!-- Modal -->
+        <template if:true={isModalOpen}>
+            <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal Header -->
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Enter Price Details</h2>
+                    </header>
+                    <!-- Modal Content -->
+                    <div class="slds-modal__content slds-p-around_medium slds-grid slds-wrap">
+                        <div class="slds-size_1-of-1 slds-medium-size_1-of-2">
+                            <lightning-input label="Opportunity Amount" value={opportunityAmount} readonly></lightning-input>
+                        </div>
+                        <div class="slds-size_1-of-1 slds-medium-size_1-of-2">
+                            <lightning-input label="Rabatt in Prozent" type="number" name="reductionPercentage" onchange={handleReductionPercentageChange}></lightning-input>
+                        </div>
+                        <div class="slds-size_1-of-1 slds-medium-size_1-of-2">
+                            <lightning-input label="Netto Preis" value={nettoPreis} readonly></lightning-input>
+                        </div>
+                        <div class="slds-size_1-of-1 slds-medium-size_1-of-2">
+                            <lightning-input label="Umsatzsteuer" value={umsatzsteuer} readonly></lightning-input>
+                        </div>
+                        <div class="slds-size_1-of-1">
+                            <lightning-input type="checkbox" label="Rabattaktion" checked={isRabattaktion} onchange={handleRabattaktionChange}></lightning-input>
+                        </div>
+                    </div>
+                    <!-- Modal Footer -->
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="neutral" label="Cancel" title="Cancel" onclick={closeModal}></lightning-button>
+                        <lightning-button variant="brand" label="Save" title="Save" onclick={saveDetails}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </lightning-card>
+</template>
