@@ -9,7 +9,8 @@ import {
   getRecordNotifyChange,
 } from "lightning/uiRecordApi";
 import OPPORTUNITY_DISCOUNT_SUMMARY_OBJECT from "@salesforce/schema/OpportunityDiscountSummary__c";
-import OPPORTUNITY_OBJECT from "@salesforce/schema/Opportunity";
+import BAUSTART_OBJECT from "@salesforce/schema/Baustart__c";
+import BAUSTART_LINE_ITEM_OBJECT from "@salesforce/schema/Baustart_Line_Item__c";
 import RECORD_CREATED_FIELD from "@salesforce/schema/Opportunity.Erm_igungen_Zusammenfassung__c";
 
 export default class ModalComponent extends LightningElement {
@@ -79,52 +80,61 @@ export default class ModalComponent extends LightningElement {
 
   // Function to handle the save action
   saveDetails() {
-    const fields = {};
-    fields["Opportunity__c"] = this.recordId; // Set the ID of the parent Opportunity record
-    fields["Totalnachlass__c"] = this.totalNachlass; // Set the Totalnachlass value
-    fields["Totalrabatt__c"] = this.totalRabatt; // Set the Totalrabatt value
-    fields["Totalverkaufspreis__c"] = this.totalVerkaufspreis;
-    fields["Totalrohertrag__c"] = this.totalRohertrag;
+    const baustartFields = {};
+    baustartFields["OpportunityId__c"] = this.recordId; // Set the ID of the parent Opportunity record
+    baustartFields["Rabatt_in_EUR__c"] = this.totalNachlass; // Set the Totalnachlass value
+    baustartFields["Rabatt_in_Prozent__c"] = this.totalRabatt; // Set the Totalrabatt value
+    baustartFields["TotalPrice"] = this.totalVerkaufspreis;
+    baustartFields["Gesamtrohertrag__c"] = this.totalRohertrag;
 
-    // Define the recordInput for creating a new record
-    const recordInput = {
-      apiName: OPPORTUNITY_DISCOUNT_SUMMARY_OBJECT.objectApiName,
-      fields,
-    };
+    // Define the rbaustartRecordInput for creating a new record
+    const baustartRecordInput = {
+      apiName: BAUSTART_OBJECT.objectApiName,
+      fields: baustartFields,
+  };
 
     // Create the record using Lightning Data Service (LDS)
-    createRecord(recordInput)
-      .then((record) => {
-        // Show success message
-        this.showToast(
-          "Success",
-          "Opportunity Discount Summary erstellt",
-          "success"
-        );
+    createRecord(baustartRecordInput)
+      .then(baustartRecord => {
+        // Show success message for Baustart creation
+        this.showToast("Success", "Baustart record created", "success");
 
-        // If the record created field is not already checked, update it
+        // Create Baustart Line Items for each line item in the modal
+        const baustartLineItemRecords = this.lineItems.map(item => {
+          const baustartLineItemFields = {
+            Baustart__c: baustartRecord.id, // Reference to the newly created Baustart record
+            // ... Map other fields from the item to the Baustart Line Item fields ...
+          };
+
+          return createRecord({
+            apiName: BAUSTART_LINE_ITEM_OBJECT.objectApiName,
+            fields: baustartLineItemFields
+          });
+        });
+
+        // Wait for all Baustart Line Item records to be created
+        return Promise.all(baustartLineItemRecords);
+      })
+      .then(() => {
+        // After creating Baustart Line Items, check if Opportunity needs to be updated
         if (!this.recordCreated) {
-          const oppFields = {};
-          oppFields["Id"] = this.recordId;
-          oppFields[RECORD_CREATED_FIELD.fieldApiName] = true;
+          const oppFields = {
+            Id: this.recordId,
+            [RECORD_CREATED_FIELD.fieldApiName]: true
+          };
 
           return updateRecord({ fields: oppFields });
         }
       })
       .then(() => {
         if (!this.recordCreated) {
-          // Notify the UI to refresh from server-side data
+          // Notify the UI to refresh the Opportunity record
           getRecordNotifyChange([{ recordId: this.recordId }]);
-
-          // Show additional success message if the checkbox was updated
-          this.showToast(
-            "Opportunity Aktualisiert",
-            "Erm_igungen_Zusammenfassung Checkbox markiert.",
-            "success"
-          );
+          // Show success message for Opportunity update
+          this.showToast("Opportunity Updated", "Record created checkbox marked.", "success");
         }
       })
-      .catch((error) => {
+      .catch(error => {
         // Handle any errors that occur during record creation or update
         this.showToast("Error", error.body.message, "error");
       })
