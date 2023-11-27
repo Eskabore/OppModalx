@@ -84,7 +84,7 @@ export default class ModalComponent extends LightningElement {
     baustartFields["OpportunityId__c"] = this.recordId; // Set the ID of the parent Opportunity record
     baustartFields["Rabatt_in_EUR__c"] = this.totalNachlass; // Set the Totalnachlass value
     baustartFields["Rabatt_in_Prozent__c"] = this.totalRabatt; // Set the Totalrabatt value
-    baustartFields["TotalPrice"] = this.totalVerkaufspreis;
+    baustartFields["TotalPrice__c"] = this.totalVerkaufspreis;
     baustartFields["Gesamtrohertrag__c"] = this.totalRohertrag;
 
     // Define the rbaustartRecordInput for creating a new record
@@ -102,8 +102,10 @@ export default class ModalComponent extends LightningElement {
         // Create Baustart Line Items for each line item in the modal
         const baustartLineItemRecords = this.lineItems.map(item => {
           const baustartLineItemFields = {
-            Baustart__c: baustartRecord.id, // Reference to the newly created Baustart record
-            // ... Map other fields from the item to the Baustart Line Item fields ...
+            BaustartId__c: baustartRecord.id, // Reference to the newly created Baustart record
+            Listenpreis__c: this.Listenpreis,
+            Quantity__c: this.Quantity,
+            Rohertrag__c: this.Rohertrag,
           };
 
           return createRecord({
