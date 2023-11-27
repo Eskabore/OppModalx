@@ -29,7 +29,9 @@ export default class ModalComponent extends LightningElement {
   wiredLineItems({ error, data }) {
     if (data) {
       this.lineItems = data.map((item) => {
-        // Map your data to the expected format, if necessary
+        // Calculate the initial Rohertrag as Listenpreis minus Produktkosten
+        const initialRohertrag = item.UnitPrice - item.Produktkosten__c;
+
         return {
           ...item,
           Listenpreis: item.UnitPrice,
@@ -37,7 +39,7 @@ export default class ModalComponent extends LightningElement {
           Verkaufspreis: item.TotalPrice, // Initial Verkaufspreis is the same as TotalPrice
           Rabatt: 0, // Initial Rabatt is 0
           Nachlass: 0, // Initial Nachlass is 0
-          Rohertrag: 0, // Initial Rohertrag is 0
+          Rohertrag: initialRohertrag, // Initial Rohertrag is 0
         };
       });
       this.updateTotalValues();
@@ -102,10 +104,13 @@ export default class ModalComponent extends LightningElement {
         // Create Baustart Line Items for each line item in the modal
         const baustartLineItemRecords = this.lineItems.map(item => {
           const baustartLineItemFields = {
-            BaustartId__c: baustartRecord.id, // Reference to the newly created Baustart record
-            Listenpreis__c: this.Listenpreis,
-            Quantity__c: this.Quantity,
-            Rohertrag__c: this.Rohertrag,
+            BaustartId__c: baustartRecord.id,
+            Product2Id__c: item.productId,
+            ListenPreis__c: item.Listenpreis, // Use item's Listenpreis
+            Quantity__c: item.Quantity, // Use item's Quantity
+            Rabatt__c: item.rabatt, // Use item's Rabatt
+            Nachlass__c: item.Nachlass, // Use item's Nachlass
+            Rohertrag__c: item.Rohertrag
           };
 
           return createRecord({
