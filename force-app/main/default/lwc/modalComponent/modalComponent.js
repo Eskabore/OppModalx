@@ -8,7 +8,7 @@ import {
   getFieldValue,
   getRecordNotifyChange,
 } from "lightning/uiRecordApi";
-import OPPORTUNITY_DISCOUNT_SUMMARY_OBJECT from "@salesforce/schema/OpportunityDiscountSummary__c";
+import AMOUNT_FIELD from '@salesforce/schema/Opportunity.Amount';
 import BAUSTART_OBJECT from "@salesforce/schema/Baustart__c";
 import BAUSTART_LINE_ITEM_OBJECT from "@salesforce/schema/Baustart_Line_Item__c";
 import RECORD_CREATED_FIELD from "@salesforce/schema/Opportunity.Erm_igungen_Zusammenfassung__c";
@@ -30,7 +30,8 @@ export default class ModalComponent extends LightningElement {
     if (data) {
       this.lineItems = data.map((item) => {
         // Calculate the initial Rohertrag as Listenpreis minus Produktkosten
-        const initialRohertrag = item.UnitPrice - item.Produktkosten__c;
+        const initialRohertrag =  
+          ((item.UnitPrice - item.Produktkosten__c) * item.Quantity).toFixed(2);
 
         return {
           ...item,
@@ -60,14 +61,17 @@ export default class ModalComponent extends LightningElement {
         item.Verkaufspreis
       );
       // Calculate Rabatt directly within the map function using the formula you provided
-      const rabatt =
-        ((item.Totalpreis - item.Verkaufspreis) / item.Totalpreis) * 100;
+      const rabatt = this.calculateRabatt(
+        item.Totalpreis,
+        item.Verkaufspreis
+        );
+
       const rohertrag = this.calculateRohertrag(
         item.Verkaufspreis,
         item.Produktkosten__c,
         item.Quantity
       );
-      return { ...item, nachlass, rabatt: rabatt.toFixed(2), rohertrag };
+      return { ...item, nachlass, rabatt, rohertrag };
     });
   }
 
@@ -93,29 +97,31 @@ export default class ModalComponent extends LightningElement {
     const baustartRecordInput = {
       apiName: BAUSTART_OBJECT.objectApiName,
       fields: baustartFields,
-  };
+    };
 
     // Create the record using Lightning Data Service (LDS)
     createRecord(baustartRecordInput)
-      .then(baustartRecord => {
+      .then((baustartRecord) => {
         // Show success message for Baustart creation
         this.showToast("Success", "Baustart record created", "success");
 
         // Create Baustart Line Items for each line item in the modal
-        const baustartLineItemRecords = this.lineItems.map(item => {
+        const baustartLineItemRecords = this.lineItems.map((item) => {
           const baustartLineItemFields = {
             BaustartId__c: baustartRecord.id,
-            Product2Id__c: item.productId,
+            Product_Name__c: item.Nur_Produktname__c,
             ListenPreis__c: item.Listenpreis, // Use item's Listenpreis
-            Quantity__c: item.Quantity, // Use item's Quantity
-            Rabatt__c: item.rabatt, // Use item's Rabatt
+            Quantity__c: item.Quantity,
+            Totalpreis__c: item.Totalpreis,
+            Verkaufspreis__c: item.Verkaufspreis,
+            Rabatt__c: this.calculateRabatt(item.Totalpreis, item.Verkaufspreis),
             Nachlass__c: item.Nachlass, // Use item's Nachlass
-            Rohertrag__c: item.Rohertrag
+            Rohertrag__c: item.Rohertrag,
           };
 
           return createRecord({
             apiName: BAUSTART_LINE_ITEM_OBJECT.objectApiName,
-            fields: baustartLineItemFields
+            fields: baustartLineItemFields,
           });
         });
 
@@ -127,7 +133,7 @@ export default class ModalComponent extends LightningElement {
         if (!this.recordCreated) {
           const oppFields = {
             Id: this.recordId,
-            [RECORD_CREATED_FIELD.fieldApiName]: true
+            [RECORD_CREATED_FIELD.fieldApiName]: true,
           };
 
           return updateRecord({ fields: oppFields });
@@ -138,10 +144,14 @@ export default class ModalComponent extends LightningElement {
           // Notify the UI to refresh the Opportunity record
           getRecordNotifyChange([{ recordId: this.recordId }]);
           // Show success message for Opportunity update
-          this.showToast("Opportunity Updated", "Record created checkbox marked.", "success");
+          this.showToast(
+            "Opportunity Updated",
+            "Record created checkbox marked.",
+            "success"
+          );
         }
       })
-      .catch(error => {
+      .catch((error) => {
         // Handle any errors that occur during record creation or update
         this.showToast("Error", error.body.message, "error");
       })
@@ -231,5 +241,12 @@ export default class ModalComponent extends LightningElement {
       return parseFloat((verkaufspreis - produktkosten * quantity).toFixed(2)); // Return Rohertrag with 2 decimal places
     }
     return "0.00"; // Default to '0.00' if there's an error in calculation
+  }
+
+  calculateRabatt(totalpreis, verkaufspreis) {
+    if (totalpreis > 0) {
+      return parseFloat(((totalpreis - verkaufspreis) / totalpreis).toFixed(2)) * 100;
+    }
+    return 0; // If totalPrice is 0, return 0 to avoid division by zero
   }
 }
