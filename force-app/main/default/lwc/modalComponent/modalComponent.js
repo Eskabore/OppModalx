@@ -8,7 +8,7 @@ import {
   getFieldValue,
   getRecordNotifyChange,
 } from "lightning/uiRecordApi";
-import AMOUNT_FIELD from '@salesforce/schema/Opportunity.Amount';
+import AMOUNT_FIELD from "@salesforce/schema/Opportunity.Amount";
 import BAUSTART_OBJECT from "@salesforce/schema/Baustart__c";
 import BAUSTART_LINE_ITEM_OBJECT from "@salesforce/schema/Baustart_Line_Item__c";
 import RECORD_CREATED_FIELD from "@salesforce/schema/Opportunity.Erm_igungen_Zusammenfassung__c";
@@ -30,8 +30,10 @@ export default class ModalComponent extends LightningElement {
     if (data) {
       this.lineItems = data.map((item) => {
         // Calculate the initial Rohertrag as Listenpreis minus Produktkosten
-        const initialRohertrag =  
-          ((item.UnitPrice - item.Produktkosten__c) * item.Quantity).toFixed(2);
+        const initialRohertrag = (
+          (item.UnitPrice - item.Produktkosten__c) *
+          item.Quantity
+        ).toFixed(2);
 
         return {
           ...item,
@@ -61,10 +63,7 @@ export default class ModalComponent extends LightningElement {
         item.Verkaufspreis
       );
       // Calculate Rabatt directly within the map function using the formula you provided
-      const rabatt = this.calculateRabatt(
-        item.Totalpreis,
-        item.Verkaufspreis
-        );
+      const rabatt = this.calculateRabatt(item.Totalpreis, item.Verkaufspreis);
 
       const rohertrag = this.calculateRohertrag(
         item.Verkaufspreis,
@@ -114,7 +113,10 @@ export default class ModalComponent extends LightningElement {
             Quantity__c: item.Quantity,
             Totalpreis__c: item.Totalpreis,
             Verkaufspreis__c: item.Verkaufspreis,
-            Rabatt__c: this.calculateRabatt(item.Totalpreis, item.Verkaufspreis),
+            Rabatt__c: this.calculateRabatt(
+              item.Totalpreis,
+              item.Verkaufspreis
+            ) * 100,
             Nachlass__c: item.Nachlass, // Use item's Nachlass
             Rohertrag__c: item.Rohertrag,
           };
@@ -244,9 +246,35 @@ export default class ModalComponent extends LightningElement {
   }
 
   calculateRabatt(totalpreis, verkaufspreis) {
+    totalpreis = Number(totalpreis);
+    verkaufspreis = Number(verkaufspreis);
+
     if (totalpreis > 0) {
-      return parseFloat(((totalpreis - verkaufspreis) / totalpreis).toFixed(2)) * 100;
+      // Calculate discount percentage and fix to two decimal places
+      const rabatt = ((totalpreis - verkaufspreis) / totalpreis) * 100;
+      return parseFloat(rabatt.toFixed(2)); // Convert string back to float if necessary
     }
     return 0; // If totalPrice is 0, return 0 to avoid division by zero
+  }
+
+  // Method to update the Opportunity record
+  updateOpportunityRecord() {
+    if (!this.recordCreated) {
+      const oppFields = {
+        Id: this.recordId,
+        [RECORD_CREATED_FIELD.fieldApiName]: true,
+      };
+      updateRecord({ fields: oppFields })
+        .then(() => {
+          this.showToast(
+            "Success",
+            "Opportunity updated successfully",
+            "success"
+          );
+        })
+        .catch((error) => {
+          this.showToast("Error", error.body.message, "error");
+        });
+    }
   }
 }
