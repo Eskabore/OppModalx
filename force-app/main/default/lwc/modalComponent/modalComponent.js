@@ -12,6 +12,7 @@ import AMOUNT_FIELD from "@salesforce/schema/Opportunity.Amount";
 import BAUSTART_OBJECT from "@salesforce/schema/Baustart__c";
 import BAUSTART_LINE_ITEM_OBJECT from "@salesforce/schema/Baustart_Line_Item__c";
 import RECORD_CREATED_FIELD from "@salesforce/schema/Opportunity.Erm_igungen_Zusammenfassung__c";
+import { calculateNachlass, calculateRabatt, calculateRohertrag } from "./utils";
 
 export default class ModalComponent extends LightningElement {
   @api recordId; // The ID of the Opportunity record
@@ -42,7 +43,7 @@ export default class ModalComponent extends LightningElement {
           Verkaufspreis: item.TotalPrice, // Initial Verkaufspreis is the same as TotalPrice
           Rabatt: 0, // Initial Rabatt is 0
           Nachlass: 0, // Initial Nachlass is 0
-          Rohertrag: initialRohertrag, // Initial Rohertrag is 0
+          Rohertrag: initialRohertrag,
         };
       });
       this.updateTotalValues();
@@ -58,14 +59,14 @@ export default class ModalComponent extends LightningElement {
 
   get lineItemsWithNachlass() {
     return this.lineItems.map((item) => {
-      const nachlass = this.calculateNachlass(
+      const nachlass = calculateNachlass(
         item.Totalpreis,
         item.Verkaufspreis
       );
       // Calculate Rabatt directly within the map function using the formula you provided
-      const rabatt = this.calculateRabatt(item.Totalpreis, item.Verkaufspreis);
+      const rabatt = calculateRabatt(item.Totalpreis, item.Verkaufspreis);
 
-      const rohertrag = this.calculateRohertrag(
+      const rohertrag = calculateRohertrag(
         item.Verkaufspreis,
         item.Produktkosten__c,
         item.Quantity
@@ -85,6 +86,19 @@ export default class ModalComponent extends LightningElement {
 
   // Function to handle the save action
   saveDetails() {
+
+    if (this.totalRabatt > 10) {
+      // Show error message to the user
+      this.dispatchEvent(
+          new ShowToastEvent({
+              title: 'Save Operation Blocked',
+              message: 'The overall Rabatt cannot exceed 10%. Please adjust the values.',
+              variant: 'error'
+          })
+      );
+      return; // Exit the function without saving
+  }
+
     const baustartFields = {};
     baustartFields["OpportunityId__c"] = this.recordId; // Set the ID of the parent Opportunity record
     baustartFields["Rabatt_in_EUR__c"] = this.totalNachlass; // Set the Totalnachlass value
@@ -109,14 +123,15 @@ export default class ModalComponent extends LightningElement {
           const baustartLineItemFields = {
             BaustartId__c: baustartRecord.id,
             Product_Name__c: item.Nur_Produktname__c,
+            Name: item.Nur_Produktname__c,
             ListenPreis__c: item.Listenpreis, // Use item's Listenpreis
             Quantity__c: item.Quantity,
             Totalpreis__c: item.Totalpreis,
             Verkaufspreis__c: item.Verkaufspreis,
-            Rabatt__c: this.calculateRabatt(
+            Rabatt__c: calculateRabatt(
               item.Totalpreis,
               item.Verkaufspreis
-            ) * 100,
+            ),
             Nachlass__c: item.Nachlass, // Use item's Nachlass
             Rohertrag__c: item.Rohertrag,
           };
@@ -130,17 +145,7 @@ export default class ModalComponent extends LightningElement {
         // Wait for all Baustart Line Item records to be created
         return Promise.all(baustartLineItemRecords);
       })
-      .then(() => {
-        // After creating Baustart Line Items, check if Opportunity needs to be updated
-        if (!this.recordCreated) {
-          const oppFields = {
-            Id: this.recordId,
-            [RECORD_CREATED_FIELD.fieldApiName]: true,
-          };
-
-          return updateRecord({ fields: oppFields });
-        }
-      })
+      .then(() => this.updateOpportunityRecord())
       .then(() => {
         if (!this.recordCreated) {
           // Notify the UI to refresh the Opportunity record
@@ -206,12 +211,12 @@ export default class ModalComponent extends LightningElement {
     const updatedVerkaufspreis = event.target.value;
     this.lineItems[itemIndex].Verkaufspreis = updatedVerkaufspreis;
     // Calculate Nachlass based on the updated Verkaufspreis
-    this.lineItems[itemIndex].Nachlass = this.calculateNachlass(
+    this.lineItems[itemIndex].Nachlass = calculateNachlass(
       this.lineItems[itemIndex].Totalpreis,
       updatedVerkaufspreis
     );
     // Calculate Rohertrag based on the updated Verkaufspreis, Produktkosten__c, and Quantity
-    this.lineItems[itemIndex].Rohertrag = this.calculateRohertrag(
+    this.lineItems[itemIndex].Rohertrag = calculateRohertrag(
       updatedVerkaufspreis,
       this.lineItems[itemIndex].Produktkosten__c,
       this.lineItems[itemIndex].Quantity
@@ -219,43 +224,7 @@ export default class ModalComponent extends LightningElement {
     this.updateTotalValues(); // Update total values when Verkaufspreis changes
   }
 
-  // Calculate Nachlass based on Totalpreis and Verkaufspreis
-  calculateNachlass(totalpreis, verkaufspreis) {
-    // Ensure both values are numbers and not null or undefined
-    totalpreis = Number(totalpreis);
-    verkaufspreis = Number(verkaufspreis);
 
-    if (!isNaN(totalpreis) && !isNaN(verkaufspreis)) {
-      return parseFloat((totalpreis - verkaufspreis).toFixed(2)); // Return Nachlass with 2 decimal places
-    }
-    return "0.00"; // Default to '0.00' if there's an error in calculation
-  }
-
-  // Calculate Rohertrag based on Verkaufspreis, Produktkosten__c, and Quantity
-  calculateRohertrag(verkaufspreis, produktkosten, quantity) {
-    // Ensure all values are numbers and not null or undefined
-    verkaufspreis = Number(verkaufspreis);
-    produktkosten = Number(produktkosten);
-    quantity = Number(quantity);
-
-    if (!isNaN(verkaufspreis) && !isNaN(produktkosten) && !isNaN(quantity)) {
-      // Multiply produktkosten by quantity before subtracting from verkaufspreis
-      return parseFloat((verkaufspreis - produktkosten * quantity).toFixed(2)); // Return Rohertrag with 2 decimal places
-    }
-    return "0.00"; // Default to '0.00' if there's an error in calculation
-  }
-
-  calculateRabatt(totalpreis, verkaufspreis) {
-    totalpreis = Number(totalpreis);
-    verkaufspreis = Number(verkaufspreis);
-
-    if (totalpreis > 0) {
-      // Calculate discount percentage and fix to two decimal places
-      const rabatt = ((totalpreis - verkaufspreis) / totalpreis) * 100;
-      return parseFloat(rabatt.toFixed(2)); // Convert string back to float if necessary
-    }
-    return 0; // If totalPrice is 0, return 0 to avoid division by zero
-  }
 
   // Method to update the Opportunity record
   updateOpportunityRecord() {
@@ -263,6 +232,8 @@ export default class ModalComponent extends LightningElement {
       const oppFields = {
         Id: this.recordId,
         [RECORD_CREATED_FIELD.fieldApiName]: true,
+        Verkaufspreis__c: this.totalVerkaufspreis,
+        Totalnachlass__c: this.totalNachlass
       };
       updateRecord({ fields: oppFields })
         .then(() => {
@@ -275,6 +246,9 @@ export default class ModalComponent extends LightningElement {
         .catch((error) => {
           this.showToast("Error", error.body.message, "error");
         });
-    }
+    } else {
+      // Resolve immediately if no update is needed
+      return Promise.resolve();
+  }
   }
 }
