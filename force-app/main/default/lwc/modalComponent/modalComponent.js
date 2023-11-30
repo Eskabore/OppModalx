@@ -105,6 +105,7 @@ export default class ModalComponent extends LightningElement {
     baustartFields["Rabatt_in_Prozent__c"] = this.totalRabatt; // Set the Totalrabatt value
     baustartFields["TotalPrice__c"] = this.totalVerkaufspreis;
     baustartFields["Gesamtrohertrag__c"] = this.totalRohertrag;
+    baustartFields["TotalTotalpreis__c"] = this.totalTotalpreis;
 
     // Define the rbaustartRecordInput for creating a new record
     const baustartRecordInput = {
