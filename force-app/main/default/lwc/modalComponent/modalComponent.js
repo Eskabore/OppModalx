@@ -49,7 +49,7 @@ export default class ModalComponent extends LightningElement {
       this.updateTotalValues();
     } else if (error) {
       // Handle errors
-      console.error("Error fetching OpportunityLineItems:", error);
+      console.error("Fehler beim Abrufen von OpportunityLineItems:", error);
     }
   }
 
@@ -91,8 +91,8 @@ export default class ModalComponent extends LightningElement {
       // Show error message to the user
       this.dispatchEvent(
           new ShowToastEvent({
-              title: 'Save Operation Blocked',
-              message: 'The overall Rabatt cannot exceed 10%. Please adjust the values.',
+              title: 'Speichervorgang blockiert',
+              message: 'Der Gesamtrabatt darf 10% nicht überschreiten. Bitte passen Sie die Werte an.',
               variant: 'error'
           })
       );
@@ -102,7 +102,6 @@ export default class ModalComponent extends LightningElement {
     const baustartFields = {};
     baustartFields["OpportunityId__c"] = this.recordId; // Set the ID of the parent Opportunity record
     baustartFields["Rabatt_in_EUR__c"] = this.totalNachlass; // Set the Totalnachlass value
-    baustartFields["Rabatt_in_Prozent__c"] = this.totalRabatt; // Set the Totalrabatt value
     baustartFields["TotalPrice__c"] = this.totalVerkaufspreis;
     baustartFields["Gesamtrohertrag__c"] = this.totalRohertrag;
     baustartFields["TotalTotalpreis__c"] = this.totalTotalpreis;
@@ -123,7 +122,6 @@ export default class ModalComponent extends LightningElement {
         const baustartLineItemRecords = this.lineItems.map((item) => {
           const baustartLineItemFields = {
             BaustartId__c: baustartRecord.id,
-            Product_Name__c: item.Nur_Produktname__c,
             Name: item.Nur_Produktname__c,
             ListenPreis__c: item.Listenpreis, // Use item's Listenpreis
             Quantity__c: item.Quantity,
@@ -153,8 +151,8 @@ export default class ModalComponent extends LightningElement {
           getRecordNotifyChange([{ recordId: this.recordId }]);
           // Show success message for Opportunity update
           this.showToast(
-            "Opportunity Updated",
-            "Record created checkbox marked.",
+            "Opportunity aktualisiert",
+            "Datensatz erstellt Checkbox markiert",
             "success"
           );
         }
@@ -240,7 +238,7 @@ export default class ModalComponent extends LightningElement {
         .then(() => {
           this.showToast(
             "Success",
-            "Opportunity updated successfully",
+            "Opportunity erfolgreich aktualisiert",
             "success"
           );
         })
