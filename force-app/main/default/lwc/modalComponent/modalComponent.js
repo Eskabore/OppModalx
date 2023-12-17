@@ -100,8 +100,8 @@ export default class ModalComponent extends LightningElement {
   }
 
     const baustartFields = {};
-    baustartFields["OpportunityId__c"] = this.recordId; // Set the ID of the parent Opportunity record
-    baustartFields["Rabatt_in_EUR__c"] = this.totalNachlass; // Set the Totalnachlass value
+    baustartFields["OpportunityId__c"] = this.recordId;
+    baustartFields["Rabatt_in_EUR__c"] = this.totalNachlass;
     baustartFields["TotalPrice__c"] = this.totalVerkaufspreis;
     baustartFields["Gesamtrohertrag__c"] = this.totalRohertrag;
     baustartFields["TotalTotalpreis__c"] = this.totalTotalpreis;
@@ -123,7 +123,8 @@ export default class ModalComponent extends LightningElement {
           const baustartLineItemFields = {
             BaustartId__c: baustartRecord.id,
             Name: item.Nur_Produktname__c,
-            ListenPreis__c: item.Listenpreis, // Use item's Listenpreis
+            ListenPreis__c: item.Listenpreis,
+            Produktkosten__c: item.Produktkosten__c,
             Quantity__c: item.Quantity,
             Totalpreis__c: item.Totalpreis,
             Verkaufspreis__c: item.Verkaufspreis,
